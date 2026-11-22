@@ -24,8 +24,17 @@ const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 // judged at all, so stop here with a clear error instead of handing the
 // gate a file that points nowhere.
 const post = JSON.parse(readFileSync(join(BOT_DIR, 'POST.json'), 'utf8'));
-if (typeof post.url !== 'string' || !post.url.startsWith('https://x.com/')) {
-  console.error(`POST.json does not name an x.com post: ${post.url}`);
+
+// Only a full status address counts: https://x.com/<handle>/status/<id>.
+// A homepage link, a profile link, or a short link would point the gate
+// at the wrong thing, so reject those here with a plain message.
+if (
+  typeof post.url !== 'string' ||
+  !/^https:\/\/x\.com\/[^/]+\/status\/[0-9]+$/.test(post.url)
+) {
+  console.error(
+    `Bad post address in POST.json — expected https://x.com/<handle>/status/<id>, got: ${post.url}`,
+  );
   process.exit(1);
 }
 
